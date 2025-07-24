@@ -1,18 +1,26 @@
 import { AllExceptionsFilter } from './all-exceptions.filter';
-import { ArgumentsHost, HttpException, HttpStatus } from '@nestjs/common';
+import {
+  ArgumentsHost,
+  HttpException,
+  HttpStatus,
+  LoggerService,
+} from '@nestjs/common';
 
 describe('AllExceptionsFilter', () => {
   let filter: AllExceptionsFilter;
   let mockResponse: any;
   let mockRequest: any;
   let mockHost: ArgumentsHost;
-
-  beforeAll(() => {
-    jest.spyOn(console, 'error').mockImplementation(() => { });
-  });
+  const mockLogger: LoggerService = {
+    log: jest.fn(),
+    error: jest.fn(),
+    warn: jest.fn(),
+    debug: jest.fn(),
+    verbose: jest.fn(),
+  };
 
   beforeEach(() => {
-    filter = new AllExceptionsFilter();
+    filter = new AllExceptionsFilter(mockLogger);
 
     mockResponse = {
       status: jest.fn().mockReturnThis(),

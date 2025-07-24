@@ -1,5 +1,5 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe, VersioningType } from '@nestjs/common';
+import { ValidationPipe, VersioningType, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
@@ -8,9 +8,12 @@ import { PrismaService } from './modules/database/prisma.service';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  const logger = app.get(WINSTON_MODULE_NEST_PROVIDER);
+  app.useLogger(logger);
+
   const configService = app.get(ConfigService);
   const prismaService = app.get(PrismaService);
-  app.useLogger(app.get(WINSTON_MODULE_NEST_PROVIDER));
 
   app.useGlobalPipes(
     new ValidationPipe({
@@ -67,11 +70,12 @@ async function bootstrap() {
   const port = configService.get('app.port');
   await app.listen(port);
 
-  console.log(`Application is running on: http://localhost:${port}`);
-  console.log(`Swagger documentation: http://localhost:${port}/api/docs`);
+  logger.log(`Application is running on: http://localhost:${port}`);
+  logger.log(`Swagger documentation: http://localhost:${port}/api/docs`);
 }
 
 bootstrap().catch((error) => {
-  console.error('Error starting application:', error);
+  const fallbackLogger = new Logger('Bootstrap');
+  fallbackLogger.error('Error starting application:', error);
   process.exit(1);
 });
