@@ -1,9 +1,18 @@
-import { Injectable, NestMiddleware, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  NestMiddleware,
+  Inject,
+  LoggerService,
+} from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
+import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 
 @Injectable()
 export class LoggerMiddleware implements NestMiddleware {
-  private readonly logger = new Logger('HTTP');
+  constructor(
+    @Inject(WINSTON_MODULE_NEST_PROVIDER)
+    private readonly logger: LoggerService,
+  ) {}
 
   use(req: Request, res: Response, next: NextFunction): void {
     const { method, originalUrl, body } = req;
@@ -13,24 +22,42 @@ export class LoggerMiddleware implements NestMiddleware {
       const duration = Date.now() - startTime;
       const statusCode = res.statusCode;
 
-      let logMessage = `${method} ${originalUrl} ${statusCode} - ${duration}ms`;
+      // Sanitize sensitive fields
+      const safeBody = { ...body };
+      if ('password' in safeBody) safeBody.password = '[REDACTED]';
+      if ('confirmPassword' in safeBody)
+        safeBody.confirmPassword = '[REDACTED]';
 
-      if (['POST', 'PUT', 'PATCH'].includes(method)) {
-        const safeBody = { ...body };
+      const logPayload = {
+        method,
+        url: originalUrl,
+        statusCode,
+        duration: `${duration}ms`,
+        ...(method === 'POST' || method === 'PUT' || method === 'PATCH'
+          ? { body: safeBody }
+          : {}),
+      };
 
-        if ('password' in safeBody) safeBody.password = '[REDACTED]';
-        if ('confirmPassword' in safeBody)
-          safeBody.confirmPassword = '[REDACTED]';
-
-        logMessage += ` | Body: ${JSON.stringify(safeBody)}`;
-      }
+      const logMessage = `[${method}] ${originalUrl} ${statusCode} - ${duration}ms`;
 
       if (statusCode >= 500) {
-        this.logger.error(logMessage);
+        this.logger.error(
+          logMessage,
+          JSON.stringify(logPayload),
+          'LoggerMiddleware',
+        );
       } else if (statusCode >= 400) {
-        this.logger.warn(logMessage);
+        this.logger.warn(
+          logMessage,
+          JSON.stringify(logPayload),
+          'LoggerMiddleware',
+        );
       } else {
-        this.logger.log(logMessage);
+        this.logger.log(
+          logMessage,
+          JSON.stringify(logPayload),
+          'LoggerMiddleware',
+        );
       }
     });
 
