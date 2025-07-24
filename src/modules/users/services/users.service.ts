@@ -49,90 +49,74 @@ export class UsersService {
 
   async findAll(): Promise<User[]> {
     const users = await this.prisma.user.findMany();
-    return users.map((u) => User.create(u));
+    return users.map((u) => User.fromPrisma(u));
   }
 
   async findById(id: string): Promise<User> {
     const cacheKey = `${this.CACHE_PREFIX}:${id}`;
 
-    try {
-      const cached = await this.cache.get<IUserProps>(cacheKey);
-      if (cached) {
-        return User.create(cached);
-      }
-
-      const user = await this.prisma.user.findUnique({ where: { id } });
-      if (!user) {
-        throw new NotFoundException('User not found');
-      }
-
-      await this.cache.set(cacheKey, user, 60 * 5);
-      return User.create(user);
-    } catch (error) {
-      throw error;
+    const cached = await this.cache.get<IUserProps>(cacheKey);
+    if (cached) {
+      return User.fromPrisma(cached);
     }
+
+    const user = await this.prisma.user.findUnique({ where: { id } });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    await this.cache.set(cacheKey, user, 60 * 5);
+    return User.fromPrisma(user);
   }
 
   async create(data: CreateUserDto): Promise<User> {
-    try {
-      const formattedData: PrismaUserCreateInput = {
-        name: data.name,
-        email: data.email,
-        phone: data.phone ? this.normalizePhone(data.phone) : undefined,
-        avatar: data.avatar,
-        isActive: data.isActive,
-        birthDate: data.birthDate
-          ? this.normalizeBirthDate(data.birthDate)
-          : undefined,
-      };
+    const formattedData: PrismaUserCreateInput = {
+      name: data.name,
+      email: data.email,
+      phone: data.phone ? this.normalizePhone(data.phone) : undefined,
+      avatar: data.avatar,
+      isActive: data.isActive,
+      birthDate: data.birthDate
+        ? this.normalizeBirthDate(data.birthDate)
+        : undefined,
+    };
 
-      const created = await this.prisma.user.create({ data: formattedData });
-      return User.create(created);
-    } catch (error) {
-      throw error;
-    }
+    const created = await this.prisma.user.create({ data: formattedData });
+    return User.fromPrisma(created);
   }
 
   async update(id: string, data: UpdateUserDto): Promise<User> {
-    try {
-      const user = await this.prisma.user.findUnique({ where: { id } });
-      if (!user) {
-        throw new NotFoundException('User not found');
-      }
-
-      const formattedData: PrismaUserUpdateInput = {};
-
-      if (data.phone) {
-        formattedData.phone = this.normalizePhone(data.phone);
-      }
-
-      if (data.birthDate) {
-        formattedData.birthDate = this.normalizeBirthDate(data.birthDate);
-      }
-
-      if (data.name !== undefined) formattedData.name = data.name;
-      if (data.email !== undefined) formattedData.email = data.email;
-      if (data.avatar !== undefined) formattedData.avatar = data.avatar;
-      if (data.isActive !== undefined) formattedData.isActive = data.isActive;
-
-      const updated = await this.prisma.user.update({
-        where: { id },
-        data: formattedData,
-      });
-
-      await this.cache.del(`${this.CACHE_PREFIX}:${id}`);
-      return User.create(updated);
-    } catch (error) {
-      throw error;
+    const user = await this.prisma.user.findUnique({ where: { id } });
+    if (!user) {
+      throw new NotFoundException('User not found');
     }
+
+    const formattedData: PrismaUserUpdateInput = {};
+
+    if (data.phone) {
+      formattedData.phone = this.normalizePhone(data.phone);
+    }
+
+    if (data.birthDate) {
+      formattedData.birthDate = this.normalizeBirthDate(data.birthDate);
+    }
+
+    if (data.name !== undefined) formattedData.name = data.name;
+    if (data.email !== undefined) formattedData.email = data.email;
+    if (data.avatar !== undefined) formattedData.avatar = data.avatar;
+    if (data.isActive !== undefined) formattedData.isActive = data.isActive;
+
+    const updated = await this.prisma.user.update({
+      where: { id },
+      data: formattedData,
+    });
+
+    await this.cache.del(`${this.CACHE_PREFIX}:${id}`);
+    return User.fromPrisma(updated);
   }
 
   async delete(id: string): Promise<void> {
-    try {
-      await this.prisma.user.delete({ where: { id } });
-      await this.cache.del(`${this.CACHE_PREFIX}:${id}`);
-    } catch (error) {
-      throw error;
-    }
+    await this.prisma.user.delete({ where: { id } });
+    await this.cache.del(`${this.CACHE_PREFIX}:${id}`);
   }
 }

@@ -1,3 +1,5 @@
+import { BadRequestException } from '@nestjs/common';
+
 export interface IUserProps {
   id: string;
   email: string;
@@ -15,9 +17,12 @@ export class User {
 
   static create(props: IUserProps): User {
     if (!props.email || !props.name) {
-      throw new Error('Missing required user fields.');
+      throw new BadRequestException('Missing required user fields.');
     }
+    return new User(props);
+  }
 
+  static fromPrisma(props: IUserProps): User {
     return new User(props);
   }
 
