@@ -195,9 +195,10 @@
         },
         "responses": {
           "200": {
-            "description": ""
+            "description": "Login efetuado com sucesso"
           }
         },
+        "summary": "Realizar login",
         "tags": [
           "Auth"
         ]
@@ -209,9 +210,10 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": ""
+            "description": "Tokens atualizados com sucesso"
           }
         },
+        "summary": "Atualizar tokens com refreshToken",
         "tags": [
           "Auth"
         ]
@@ -223,9 +225,15 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": ""
+            "description": "Logout realizado com sucesso"
           }
         },
+        "security": [
+          {
+            "accessToken": []
+          }
+        ],
+        "summary": "Logout do usuário autenticado",
         "tags": [
           "Auth"
         ]

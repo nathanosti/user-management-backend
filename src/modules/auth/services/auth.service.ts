@@ -73,7 +73,6 @@ export class AuthService {
         refreshToken: encryptedRefreshToken,
       };
     } catch (err) {
-      console.error('[AuthService][login] error:', err);
       throw new UnauthorizedException('LOGIN_FAILED');
     }
   }
@@ -155,5 +154,10 @@ export class AuthService {
     };
 
     return value * multipliers[unit];
+  }
+
+  async logout(userId: string): Promise<void> {
+    await this.cacheService.del(`auth:access:${userId}`);
+    await this.cacheService.del(`auth:refresh:${userId}`);
   }
 }
