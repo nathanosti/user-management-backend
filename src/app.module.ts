@@ -15,6 +15,7 @@ import { UsersModule } from './modules/users/users.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { LoggerMiddleware } from './common/middleware/logger.middleware';
+import { AuthModule } from './modules/auth/auth.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { LoggerMiddleware } from './common/middleware/logger.middleware';
     DatabaseModule,
     CacheModule,
     UsersModule,
+    AuthModule,
   ],
   providers: [
     {

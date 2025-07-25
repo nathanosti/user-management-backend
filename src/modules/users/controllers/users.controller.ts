@@ -8,27 +8,56 @@ import {
   Body,
   HttpCode,
   HttpStatus,
+  Query,
+  UseGuards,
 } from '@nestjs/common';
 import { UsersService } from '../services/users.service';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
 import { UserViewModel } from '../view-models/user.view-model';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiParam,
+  ApiQuery,
+  ApiBody,
+  ApiCookieAuth,
+} from '@nestjs/swagger';
+import { AuthGuard } from '@nestjs/passport';
+import { ReqUser } from 'src/modules/auth/decorators/req-user.decorator';
+import { CurrentUser } from '../types/current-user.type';
 
 @ApiTags('Users')
+@UseGuards(AuthGuard('jwt'))
+@ApiCookieAuth('accessToken')
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) { }
+  constructor(private readonly usersService: UsersService) {}
 
   @Get()
-  @ApiOperation({ summary: 'Listar todos os usuários' })
+  @ApiOperation({ summary: 'Listar todos os usuários com paginação' })
+  @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
+  @ApiQuery({ name: 'limit', required: false, type: Number, example: 10 })
   @ApiResponse({
     status: 200,
     description: 'Lista de usuários retornada com sucesso.',
   })
-  async findAll() {
-    const users = await this.usersService.findAll();
-    return users.map(UserViewModel.toHTTP);
+  async findAll(@Query('page') page = 1, @Query('limit') limit = 10) {
+    const { users, total } = await this.usersService.findAll(
+      Number(page),
+      Number(limit),
+    );
+
+    return {
+      data: users.map(UserViewModel.toHTTP),
+      meta: {
+        total,
+        page: Number(page),
+        limit: Number(limit),
+        totalPages: Math.ceil(total / Number(limit)),
+      },
+    };
   }
 
   @Get(':id')
@@ -42,28 +71,45 @@ export class UsersController {
   }
 
   @Post()
-  @ApiOperation({ summary: 'Criar novo usuário' })
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Criar novo usuário (restrito a administradores)' })
+  @ApiBody({ type: CreateUserDto })
   @ApiResponse({ status: 201, description: 'Usuário criado com sucesso.' })
-  async create(@Body() data: CreateUserDto) {
-    const user = await this.usersService.create(data);
+  @ApiResponse({ status: 400, description: 'Dados inválidos.' })
+  @ApiResponse({ status: 409, description: 'E-mail já está em uso.' })
+  async create(
+    @Body() data: CreateUserDto,
+    @ReqUser() currentUser: CurrentUser,
+  ) {
+    const user = await this.usersService.create(data, currentUser);
     return UserViewModel.toHTTP(user);
   }
 
   @Put(':id')
-  @ApiOperation({ summary: 'Atualizar usuário existente' })
+  @ApiOperation({
+    summary: 'Atualizar usuário existente (apenas o próprio usuário)',
+  })
   @ApiParam({ name: 'id', type: 'string' })
+  @ApiBody({ type: UpdateUserDto })
   @ApiResponse({ status: 200, description: 'Usuário atualizado com sucesso.' })
-  async update(@Param('id') id: string, @Body() data: UpdateUserDto) {
-    const user = await this.usersService.update(id, data);
+  @ApiResponse({ status: 400, description: 'Dados inválidos.' })
+  @ApiResponse({ status: 404, description: 'Usuário não encontrado.' })
+  async update(
+    @Param('id') id: string,
+    @Body() data: UpdateUserDto,
+    @ReqUser() currentUser: CurrentUser,
+  ) {
+    const user = await this.usersService.update(id, data, currentUser);
     return UserViewModel.toHTTP(user);
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: 'Remover usuário' })
+  @ApiOperation({ summary: 'Remover usuário (apenas o próprio usuário)' })
   @ApiParam({ name: 'id', type: 'string' })
   @ApiResponse({ status: 204, description: 'Usuário removido com sucesso.' })
-  async delete(@Param('id') id: string) {
-    await this.usersService.delete(id);
+  @ApiResponse({ status: 404, description: 'Usuário não encontrado.' })
+  async delete(@Param('id') id: string, @ReqUser() currentUser: CurrentUser) {
+    await this.usersService.delete(id, currentUser);
   }
 }

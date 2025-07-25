@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { User } from '../entities/user.entity';
+import { Role } from '@prisma/client';
 
 export interface IUserViewModel {
   id: string;
@@ -9,6 +10,7 @@ export interface IUserViewModel {
   birthDate?: Date;
   avatar?: string;
   isActive: boolean;
+  role: Role;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -35,6 +37,9 @@ export class UserViewModel {
   @ApiProperty()
   isActive: boolean;
 
+  @ApiProperty({ enum: Role })
+  role: Role;
+
   @ApiProperty({ type: String, format: 'date-time' })
   createdAt: Date;
 
@@ -52,6 +57,7 @@ export class UserViewModel {
       birthDate: data.birthDate ?? undefined,
       avatar: data.avatar ?? undefined,
       isActive: data.isActive,
+      role: data.role,
       createdAt: data.createdAt,
       updatedAt: data.updatedAt,
     };

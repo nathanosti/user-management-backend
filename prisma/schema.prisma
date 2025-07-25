@@ -12,6 +12,8 @@ model User {
   id        String   @id @default(uuid())
   email     String   @unique
   name      String
+  password  String
+  role      Role     @default(MEMBER)
   phone     String?
   birthDate DateTime?
   avatar    String?
@@ -21,8 +23,15 @@ model User {
 
   @@index([email])
   @@index([name])
+  @@index([role])
   @@index([isActive])
   @@index([createdAt])
-  
+
   @@map("users")
 }
+
+enum Role {
+  ADMIN
+  MEMBER
+}
+

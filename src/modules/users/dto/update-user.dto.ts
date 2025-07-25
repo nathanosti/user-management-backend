@@ -5,7 +5,11 @@ import {
   IsString,
   IsBoolean,
   IsDateString,
+  Matches,
+  MinLength,
+  IsEnum,
 } from 'class-validator';
+import { Role } from '@prisma/client';
 
 export class UpdateUserDto {
   @ApiProperty({ required: false })
@@ -21,6 +25,9 @@ export class UpdateUserDto {
   @ApiProperty({ required: false })
   @IsOptional()
   @IsString()
+  @Matches(/^(\+55\s?)?(\d{2})\s?\d{4,5}-?\d{4}$/, {
+    message: 'phone must be a valid Brazilian phone number',
+  })
   phone?: string;
 
   @ApiProperty({ required: false, type: String, format: 'date-time' })
@@ -37,4 +44,15 @@ export class UpdateUserDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
+
+  @ApiProperty({ required: false, enum: Role })
+  @IsOptional()
+  @IsEnum(Role, { message: 'role must be ADMIN or MEMBER' })
+  role?: Role;
+
+  @ApiProperty({ required: false, minLength: 6 })
+  @IsOptional()
+  @IsString()
+  @MinLength(6)
+  password?: string;
 }

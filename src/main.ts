@@ -5,9 +5,13 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { AppModule } from './app.module';
 import { PrismaService } from './modules/database/prisma.service';
+import { writeFileSync } from 'fs';
+import * as cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  app.use(cookieParser());
 
   const logger = app.get(WINSTON_MODULE_NEST_PROVIDER);
   app.useLogger(logger);
@@ -43,6 +47,7 @@ async function bootstrap() {
     .setDescription('API para gerenciamento de usuários com cache Redis')
     .setVersion('1.0')
     .addTag('Users', 'Operações relacionadas a usuários')
+    .addCookieAuth('accessToken')
     .addBearerAuth(
       {
         type: 'http',
@@ -59,11 +64,14 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, document, {
     swaggerOptions: {
+      withCredentials: true,
       persistAuthorization: true,
       tagsSorter: 'alpha',
       operationsSorter: 'alpha',
     },
   });
+
+  writeFileSync('./swagger.json', JSON.stringify(document, null, 2));
 
   await prismaService.enableShutdownHooks(app);
 
