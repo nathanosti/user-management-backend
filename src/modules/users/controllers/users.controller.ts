@@ -8,6 +8,7 @@ import {
   Body,
   HttpCode,
   HttpStatus,
+  Query,
 } from '@nestjs/common';
 import { UsersService } from '../services/users.service';
 import { CreateUserDto } from '../dto/create-user.dto';
@@ -18,23 +19,38 @@ import {
   ApiOperation,
   ApiResponse,
   ApiParam,
+  ApiQuery,
   ApiBody,
 } from '@nestjs/swagger';
 
 @ApiTags('Users')
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(private readonly usersService: UsersService) { }
 
   @Get()
-  @ApiOperation({ summary: 'Listar todos os usuários' })
+  @ApiOperation({ summary: 'Listar todos os usuários com paginação' })
+  @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
+  @ApiQuery({ name: 'limit', required: false, type: Number, example: 10 })
   @ApiResponse({
     status: 200,
     description: 'Lista de usuários retornada com sucesso.',
   })
-  async findAll() {
-    const users = await this.usersService.findAll();
-    return users.map(UserViewModel.toHTTP);
+  async findAll(@Query('page') page = 1, @Query('limit') limit = 10) {
+    const { users, total } = await this.usersService.findAll(
+      Number(page),
+      Number(limit),
+    );
+
+    return {
+      data: users.map(UserViewModel.toHTTP),
+      meta: {
+        total,
+        page: Number(page),
+        limit: Number(limit),
+        totalPages: Math.ceil(total / Number(limit)),
+      },
+    };
   }
 
   @Get(':id')

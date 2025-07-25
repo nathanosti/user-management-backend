@@ -5,18 +5,33 @@ import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class UsersRepository {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   async create(data: Prisma.UserCreateInput): Promise<User> {
     const user = await this.prisma.user.create({ data });
     return User.create(user);
   }
 
-  async findAll(): Promise<User[]> {
-    const users = await this.prisma.user.findMany();
-    return users.map((user) => User.create(user));
-  }
+  async findAll(
+    page: number,
+    limit: number,
+  ): Promise<{ users: User[]; total: number }> {
+    const skip = (page - 1) * limit;
 
+    const [users, total] = await this.prisma.$transaction([
+      this.prisma.user.findMany({
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.user.count(),
+    ]);
+
+    return {
+      users: users.map((user) => User.create(user)),
+      total,
+    };
+  }
   async findById(id: string): Promise<User | null> {
     const user = await this.prisma.user.findUnique({ where: { id } });
     return user ? User.create(user) : null;

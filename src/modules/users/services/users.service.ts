@@ -29,7 +29,7 @@ export class UsersService {
   constructor(
     private readonly usersRepository: UsersRepository,
     private readonly cache: CacheService,
-  ) {}
+  ) { }
 
   private normalizePhone(phone: string): string {
     const digits = phone.replace(/\D/g, '');
@@ -44,21 +44,42 @@ export class UsersService {
     return date;
   }
 
-  async findAll(): Promise<User[]> {
-    const cacheKey = `${this.CACHE_PREFIX}:all`;
+  async findAll(
+    page = 1,
+    limit = 10,
+  ): Promise<{ users: User[]; total: number; page: number; limit: number }> {
+    const cacheKey = `${this.CACHE_PREFIX}:all:${page}:${limit}`;
 
-    const cached = await this.cache.get<IUserProps[]>(cacheKey);
+    const cached = await this.cache.get<{
+      users: IUserProps[];
+      total: number;
+      page: number;
+      limit: number;
+    }>(cacheKey);
 
-    if (cached) return cached.map((u) => User.fromPrisma(u));
+    if (cached) {
+      return {
+        users: cached.users.map((u) => User.fromPrisma(u)),
+        total: cached.total,
+        page: cached.page,
+        limit: cached.limit,
+      };
+    }
 
-    const users = await this.usersRepository.findAll();
+    const { users, total } = await this.usersRepository.findAll(page, limit);
+
     await this.cache.set(
       cacheKey,
-      users.map((u) => u.toPlain()),
+      {
+        users: users.map((u) => u.toPlain()),
+        total,
+        page,
+        limit,
+      },
       60 * 5,
     );
 
-    return users;
+    return { users, total, page, limit };
   }
 
   async findById(id: string): Promise<User> {
