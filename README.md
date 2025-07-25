@@ -1,98 +1,188 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# 🧠 API Backend - Sistema de Autenticação e Gerenciamento
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Este projeto é uma API desenvolvida com **NestJS**, **PostgreSQL**, **Redis** e containerização com **Docker**. Ela inclui autenticação JWT com criptografia, cache com Redis, e gerenciamento de usuários.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+---
 
-## Description
+## 🚀 Tecnologias Utilizadas
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+- [NestJS](https://nestjs.com/)
+- [PostgreSQL](https://www.postgresql.org/)
+- [Redis](https://redis.io/)
+- [Prisma ORM](https://www.prisma.io/)
+- [Docker](https://www.docker.com/)
+- [JWT](https://jwt.io/) com **criptografia AES-256**
+- [Winston](https://github.com/winstonjs/winston) para logs estruturados
 
-## Project setup
+---
 
-```bash
-$ npm install
-```
+## 📦 Requisitos
 
-## Compile and run the project
+| Requisito           | Versão mínima recomendada             |
+| ------------------- | ------------------------------------- |
+| Node.js             | 18.x ou superior                      |
+| Docker              | 20.x ou superior                      |
+| Docker Compose      | 2.x ou superior                       |
+| Sistema Operacional | Linux, macOS, WSL2 (Windows via WSL2) |
+
+---
+
+## 📁 Instalação do Projeto
+
+1. **Clone o repositório**
 
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+git clone https://github.comnathanosti/user-management-backend.git
+cd user-management-backend
 ```
 
-## Run tests
+2. **Instale as dependências**
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+npm install
 ```
 
-## Deployment
+---
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+## 🐳 Subindo o ambiente com Docker
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+Antes de iniciar a API, suba os serviços de **PostgreSQL** e **Redis** com o seguinte comando:
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+npm run docker:dev
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+Este comando executa:
 
-## Resources
+- Containers definidos em `docker-compose.yml` e `docker-compose.dev.yml`
+- Criação do banco via `init-db.sql`
+- Inicialização do Redis
 
-Check out a few resources that may come in handy when working with NestJS:
+> 🔐 Os dados de conexão são definidos via `.env`.
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+---
 
-## Support
+## 🔧 Iniciando o servidor em modo de desenvolvimento
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+Com os containers já rodando, inicie a API com:
 
-## Stay in touch
+```bash
+npm run start:dev
+```
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+Isso inicia a aplicação com hot-reload via `ts-node-dev`.
 
-## License
+---
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+## ⚙️ Variáveis de Ambiente (.env)
+
+Crie um `.env` com o seguinte:
+
+````env
+DATABASE_URL=
+
+REDIS_HOST=
+REDIS_PORT=
+REDIS_PASSWORD=
+
+PORT=
+NODE_ENV=
+
+JWT_SECRET=
+JWT_ENCRYPTION_SECRET=
+JWT_ACCESS_EXPIRES_IN=
+JWT_REFRESH_EXPIRES_IN=
+
+LOG_LEVEL=
+
+CORS_ORIGIN=```
+
+> ⚠️ `JWT_ENCRYPTION_SECRET` deve ter exatamente 32 caracteres.
+
+---
+
+## 🛠 Scripts disponíveis
+
+| Comando                   | Ação                                                 |
+| ------------------------- | ---------------------------------------------------- |
+| `npm run docker:dev`      | Sobe Redis + PostgreSQL e aplica `init-db.sql`       |
+| `npm run start:dev`       | Inicia a API local com hot reload                    |
+| `sh scripts/clean.sh`     | Remove volumes, containers e redes Docker            |
+| `sh scripts/logs.sh`      | Mostra os logs em tempo real dos containers          |
+| `sh scripts/dev-start.sh` | Roda a API local lendo `.env` e conectando ao Docker |
+
+---
+
+## 📌 Fluxo de autenticação JWT criptografado
+
+- O backend **gera tokens JWT normais**, mas os **criptografa com AES-256-CBC** antes de enviar ao frontend.
+- O frontend **não consegue decodificar** o token via jwt.io.
+- O backend **decripta** e **valida o hash SHA-256** no Redis para garantir autenticidade.
+
+---
+
+## 📫 Exemplo de login
+
+**Request:**
+
+```http
+POST /v1/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@sistema.com",
+  "password": "senha123*"
+}
+````
+
+**Response:**
+
+```json
+{
+  "message": "Login successful"
+}
+```
+
+> ⚠️ Tokens sao salvos via cookies!!.
+
+---
+
+## 🧪 Testando conexões e logs
+
+```bash
+sh scripts/logs.sh
+```
+
+---
+
+## 🧹 Limpando tudo
+
+```bash
+sh scripts/clean.sh
+```
+
+---
+
+## 📚 Documentação Swagger
+
+Disponível em:
+
+```
+http://localhost:3001/api/docs
+```
+
+---
+
+## 🖥️ Compatibilidade
+
+Testado em:
+
+- ✅ Linux (Ubuntu, Arch, Fedora)
+- ✅ macOS (Intel / Apple Silicon)
+- ✅ Windows via WSL2 com Docker Desktop
+
+---
+
+## 👨‍💻 Autor
+
+## Desenvolvido por [Nathan Osti Miguel]
