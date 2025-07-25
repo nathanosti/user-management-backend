@@ -95,7 +95,8 @@ JWT_REFRESH_EXPIRES_IN=
 
 LOG_LEVEL=
 
-CORS_ORIGIN=```
+CORS_ORIGIN=
+```
 
 > ⚠️ `JWT_ENCRYPTION_SECRET` deve ter exatamente 32 caracteres.
 
