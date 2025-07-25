@@ -78,7 +78,7 @@ Isso inicia a aplicação com hot-reload via `ts-node-dev`.
 
 Crie um `.env` com o seguinte:
 
-````env
+```env
 DATABASE_URL=
 
 REDIS_HOST=
@@ -134,7 +134,7 @@ Content-Type: application/json
   "email": "admin@sistema.com",
   "password": "senha123*"
 }
-````
+```
 
 **Response:**
 
