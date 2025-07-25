@@ -186,4 +186,4 @@ Testado em:
 
 ## Autor
 
-## Desenvolvido por [Nathan Osti Miguel]
+## Desenvolvido por [Nathan Osti Miguel](https://www.linkedin.com/in/nathanosti/)
