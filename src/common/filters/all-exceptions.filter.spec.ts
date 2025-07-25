@@ -3,86 +3,100 @@ import {
   ArgumentsHost,
   HttpException,
   HttpStatus,
-  LoggerService,
+  Logger,
 } from '@nestjs/common';
+import { Request, Response } from 'express';
 
 describe('AllExceptionsFilter', () => {
   let filter: AllExceptionsFilter;
-  let mockResponse: any;
-  let mockRequest: any;
+  let mockReq: Request;
+  let mockRes: Response;
   let mockHost: ArgumentsHost;
-  const mockLogger: LoggerService = {
-    log: jest.fn(),
-    error: jest.fn(),
-    warn: jest.fn(),
-    debug: jest.fn(),
-    verbose: jest.fn(),
-  };
+  let statusMock: jest.Mock;
+  let jsonMock: jest.Mock;
+  let loggerSpy: jest.SpyInstance;
 
   beforeEach(() => {
-    filter = new AllExceptionsFilter(mockLogger);
+    filter = new AllExceptionsFilter();
 
-    mockResponse = {
-      status: jest.fn().mockReturnThis(),
-      json: jest.fn(),
-    };
-
-    mockRequest = {
-      url: '/test',
+    mockReq = {
       method: 'GET',
+      url: '/test',
+    } as Request;
+
+    jsonMock = jest.fn();
+    statusMock = jest.fn().mockReturnValue({ json: jsonMock });
+
+    mockRes = {
+      status: statusMock,
+    } as unknown as Response;
+
+    const httpContext = {
+      getRequest: () => mockReq,
+      getResponse: () => mockRes,
+      getNext: () => undefined,
     };
 
     mockHost = {
-      switchToHttp: () => ({
-        getResponse: () => mockResponse,
-        getRequest: () => mockRequest,
-      }),
-    } as unknown as ArgumentsHost;
+      switchToHttp: () => httpContext,
+    } as ArgumentsHost;
+
+    loggerSpy = jest.spyOn(Logger.prototype, 'error').mockImplementation();
   });
 
-  it('should be defined', () => {
-    expect(filter).toBeDefined();
+  afterEach(() => {
+    jest.clearAllMocks();
   });
 
-  it('should handle HttpException', () => {
-    const exception = new HttpException('Forbidden', HttpStatus.FORBIDDEN);
+  it('should handle HttpException properly', () => {
+    const exception = new HttpException('Not Found', HttpStatus.NOT_FOUND);
+
     filter.catch(exception, mockHost);
 
-    expect(mockResponse.status).toHaveBeenCalledWith(403);
-
-    const jsonResponse = mockResponse.json.mock.calls[0][0];
-    expect(jsonResponse.statusCode).toBe(403);
-    expect(jsonResponse.message).toBe('Forbidden');
-    expect(jsonResponse.method).toBe('GET');
-    expect(jsonResponse.path).toBe('/test');
-    expect(typeof jsonResponse.timestamp).toBe('string');
+    expect(statusMock).toHaveBeenCalledWith(404);
+    expect(jsonMock).toHaveBeenCalledWith({
+      statusCode: 404,
+      message: 'Not Found',
+      path: '/test',
+      timestamp: expect.any(String),
+    });
+    expect(loggerSpy).toHaveBeenCalledWith('[GET] /test 404 → "Not Found"');
   });
 
-  it('should handle generic Error', () => {
-    const error = new Error('Unexpected error');
+  it('should handle SyntaxError with body and status 400', () => {
+    const syntaxError = Object.assign(new SyntaxError('Unexpected token'), {
+      body: true,
+      status: 400,
+    });
+
+    filter.catch(syntaxError, mockHost);
+
+    expect(statusMock).toHaveBeenCalledWith(400);
+    expect(jsonMock).toHaveBeenCalledWith({
+      statusCode: 400,
+      message: expect.stringContaining('Malformed JSON'),
+      path: '/test',
+      timestamp: expect.any(String),
+    });
+    expect(loggerSpy).toHaveBeenCalledWith(
+      expect.stringContaining('[GET] /test 400 →'),
+    );
+  });
+
+  it('should handle unknown error as 500', () => {
+    const error = new Error('Unknown failure');
+
     filter.catch(error, mockHost);
 
-    expect(mockResponse.status).toHaveBeenCalledWith(500);
-
-    const jsonResponse = mockResponse.json.mock.calls[0][0];
-    expect(jsonResponse.statusCode).toBe(500);
-    expect(jsonResponse.message).toBe('Unexpected error');
-    expect(jsonResponse.method).toBe('GET');
-    expect(jsonResponse.path).toBe('/test');
-    expect(typeof jsonResponse.timestamp).toBe('string');
-  });
-
-  it('should handle unknown exception', () => {
-    const exception = 'some string';
-    filter.catch(exception, mockHost);
-
-    expect(mockResponse.status).toHaveBeenCalledWith(500);
-
-    const jsonResponse = mockResponse.json.mock.calls[0][0];
-    expect(jsonResponse.statusCode).toBe(500);
-    expect(jsonResponse.message).toBe('Internal server error');
-    expect(jsonResponse.method).toBe('GET');
-    expect(jsonResponse.path).toBe('/test');
-    expect(typeof jsonResponse.timestamp).toBe('string');
+    expect(statusMock).toHaveBeenCalledWith(500);
+    expect(jsonMock).toHaveBeenCalledWith({
+      statusCode: 500,
+      message: 'Internal server error',
+      path: '/test',
+      timestamp: expect.any(String),
+    });
+    expect(loggerSpy).toHaveBeenCalledWith(
+      '[GET] /test 500 → "Internal server error"',
+    );
   });
 });

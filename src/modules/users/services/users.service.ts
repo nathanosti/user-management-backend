@@ -5,7 +5,7 @@ import {
   BadRequestException,
   ForbiddenException,
 } from '@nestjs/common';
-import { CacheService } from 'src/modules/cache/cache.service';
+import { CacheService } from '../../cache/cache.service';
 import { User, IUserProps } from '../entities/user.entity';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
@@ -99,6 +99,7 @@ export class UsersService {
     if (cached) return User.fromPrisma(cached);
 
     const user = await this.usersRepository.findById(id);
+
     if (!user) throw new NotFoundException('User not found');
 
     await this.cache.set(cacheKey, user.toPlain(), 60 * 5);
