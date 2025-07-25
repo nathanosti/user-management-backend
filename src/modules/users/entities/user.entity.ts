@@ -13,7 +13,7 @@ export interface IUserProps {
 }
 
 export class User {
-  private constructor(private readonly props: IUserProps) { }
+  private constructor(private readonly props: IUserProps) {}
 
   static create(props: IUserProps): User {
     if (!props.email || !props.name) {
@@ -24,6 +24,10 @@ export class User {
 
   static fromPrisma(props: IUserProps): User {
     return new User(props);
+  }
+
+  toPlain(): IUserProps {
+    return this.props;
   }
 
   get data(): IUserProps {
