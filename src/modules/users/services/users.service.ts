@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   ConflictException,
+  BadRequestException,
 } from '@nestjs/common';
 import { CacheService } from 'src/modules/cache/cache.service';
 import { User, IUserProps } from '../entities/user.entity';
@@ -12,6 +13,7 @@ import { UsersRepository } from '../repositories/users.repository';
 type UserCreateInput = {
   name: string;
   email: string;
+  password: string;
   phone?: string;
   avatar?: string;
   isActive?: boolean;
@@ -74,11 +76,17 @@ export class UsersService {
 
   async create(data: CreateUserDto): Promise<User> {
     const exists = await this.usersRepository.findByEmail(data.email);
+
     if (exists) throw new ConflictException('E-mail already in use');
+
+    if (!data.password) {
+      throw new BadRequestException('Password is required');
+    }
 
     const formattedData: UserCreateInput = {
       name: data.name,
       email: data.email,
+      password: data.password,
       phone: data.phone ? this.normalizePhone(data.phone) : undefined,
       avatar: data.avatar,
       isActive: data.isActive,

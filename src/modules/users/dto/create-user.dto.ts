@@ -7,7 +7,10 @@ import {
   IsBoolean,
   IsDateString,
   Matches,
+  MinLength,
+  IsEnum,
 } from 'class-validator';
+import { Role } from '@prisma/client';
 
 export class CreateUserDto {
   @ApiProperty()
@@ -41,4 +44,19 @@ export class CreateUserDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
+
+  @ApiProperty({
+    required: false,
+    enum: Role,
+    default: Role.MEMBER,
+  })
+  @IsOptional()
+  @IsEnum(Role, { message: 'role must be ADMIN or MEMBER' })
+  role?: Role;
+
+  @ApiProperty({ required: false, minLength: 6 })
+  @IsOptional()
+  @IsString()
+  @MinLength(6)
+  password?: string;
 }
