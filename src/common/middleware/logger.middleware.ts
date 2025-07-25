@@ -22,7 +22,6 @@ export class LoggerMiddleware implements NestMiddleware {
       const duration = Date.now() - startTime;
       const statusCode = res.statusCode;
 
-      // Sanitize sensitive fields
       const safeBody = { ...body };
       if ('password' in safeBody) safeBody.password = '[REDACTED]';
       if ('confirmPassword' in safeBody)
