@@ -4,7 +4,7 @@ Este projeto é uma API desenvolvida com **NestJS**, **PostgreSQL**, **Redis** e
 
 ---
 
-## 🚀 Tecnologias Utilizadas
+## Tecnologias Utilizadas
 
 - [NestJS](https://nestjs.com/)
 - [PostgreSQL](https://www.postgresql.org/)
@@ -16,7 +16,7 @@ Este projeto é uma API desenvolvida com **NestJS**, **PostgreSQL**, **Redis** e
 
 ---
 
-## 📦 Requisitos
+## Requisitos
 
 | Requisito           | Versão mínima recomendada             |
 | ------------------- | ------------------------------------- |
@@ -27,7 +27,7 @@ Este projeto é uma API desenvolvida com **NestJS**, **PostgreSQL**, **Redis** e
 
 ---
 
-## 📁 Instalação do Projeto
+## Instalação do Projeto
 
 1. **Clone o repositório**
 
@@ -44,7 +44,7 @@ npm install
 
 ---
 
-## 🐳 Subindo o ambiente com Docker
+## Subindo o ambiente com Docker
 
 Antes de iniciar a API, suba os serviços de **PostgreSQL** e **Redis** com o seguinte comando:
 
@@ -58,11 +58,11 @@ Este comando executa:
 - Criação do banco via `init-db.sql`
 - Inicialização do Redis
 
-> 🔐 Os dados de conexão são definidos via `.env`.
+> Os dados de conexão são definidos via `.env`.
 
 ---
 
-## 🔧 Iniciando o servidor em modo de desenvolvimento
+## Iniciando o servidor em modo de desenvolvimento
 
 Com os containers já rodando, inicie a API com:
 
@@ -102,7 +102,7 @@ CORS_ORIGIN=
 
 ---
 
-## 🛠 Scripts disponíveis
+## Scripts disponíveis
 
 | Comando                   | Ação                                                 |
 | ------------------------- | ---------------------------------------------------- |
@@ -114,7 +114,7 @@ CORS_ORIGIN=
 
 ---
 
-## 📌 Fluxo de autenticação JWT criptografado
+## Fluxo de autenticação JWT criptografado
 
 - O backend **gera tokens JWT normais**, mas os **criptografa com AES-256-CBC** antes de enviar ao frontend.
 - O frontend **não consegue decodificar** o token via jwt.io.
@@ -122,7 +122,7 @@ CORS_ORIGIN=
 
 ---
 
-## 📫 Exemplo de login
+## Exemplo de login
 
 **Request:**
 
@@ -148,7 +148,7 @@ Content-Type: application/json
 
 ---
 
-## 🧪 Testando conexões e logs
+## Testando conexões e logs
 
 ```bash
 sh scripts/logs.sh
@@ -156,7 +156,7 @@ sh scripts/logs.sh
 
 ---
 
-## 🧹 Limpando tudo
+## Limpando tudo
 
 ```bash
 sh scripts/clean.sh
@@ -164,7 +164,7 @@ sh scripts/clean.sh
 
 ---
 
-## 📚 Documentação Swagger
+## Documentação Swagger
 
 Disponível em:
 
@@ -174,7 +174,7 @@ http://localhost:3001/api/docs
 
 ---
 
-## 🖥️ Compatibilidade
+## Compatibilidade
 
 Testado em:
 
@@ -184,6 +184,6 @@ Testado em:
 
 ---
 
-## 👨‍💻 Autor
+## Autor
 
 ## Desenvolvido por [Nathan Osti Miguel]
