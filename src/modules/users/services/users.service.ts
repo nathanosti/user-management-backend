@@ -3,6 +3,7 @@ import {
   NotFoundException,
   ConflictException,
   BadRequestException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { CacheService } from 'src/modules/cache/cache.service';
 import { User, IUserProps } from '../entities/user.entity';
@@ -21,6 +22,11 @@ type UserCreateInput = {
 };
 
 type UserUpdateInput = Partial<UserCreateInput>;
+
+type CurrentUser = {
+  id: string;
+  role: string;
+};
 
 @Injectable()
 export class UsersService {
@@ -83,9 +89,7 @@ export class UsersService {
   }
 
   async findByEmail(email: string): Promise<User | null> {
-    const user = await this.usersRepository.findByEmail(email);
-
-    return user;
+    return this.usersRepository.findByEmail(email);
   }
 
   async findById(id: string): Promise<User> {
@@ -101,9 +105,12 @@ export class UsersService {
     return user;
   }
 
-  async create(data: CreateUserDto): Promise<User> {
-    const exists = await this.usersRepository.findByEmail(data.email);
+  async create(data: CreateUserDto, currentUser: CurrentUser): Promise<User> {
+    if (currentUser.role !== 'ADMIN') {
+      throw new ForbiddenException('Only admins can create new users');
+    }
 
+    const exists = await this.usersRepository.findByEmail(data.email);
     if (exists) throw new ConflictException('E-mail already in use');
 
     if (!data.password) {
@@ -127,7 +134,15 @@ export class UsersService {
     return user;
   }
 
-  async update(id: string, data: UpdateUserDto): Promise<User> {
+  async update(
+    id: string,
+    data: UpdateUserDto,
+    currentUser: CurrentUser,
+  ): Promise<User> {
+    if (currentUser.id !== id && currentUser.role !== 'ADMIN') {
+      throw new ForbiddenException('You can only update your own profile');
+    }
+
     const user = await this.usersRepository.findById(id);
     if (!user) throw new NotFoundException('User not found');
 
@@ -146,7 +161,11 @@ export class UsersService {
     return updated;
   }
 
-  async delete(id: string): Promise<void> {
+  async delete(id: string, currentUser: CurrentUser): Promise<void> {
+    if (currentUser.id !== id && currentUser.role !== 'ADMIN') {
+      throw new ForbiddenException('You can only delete your own account');
+    }
+
     await this.usersRepository.delete(id);
     await this.cache.del(`${this.CACHE_PREFIX}:${id}`);
     await this.cache.del(`${this.CACHE_PREFIX}:all`);

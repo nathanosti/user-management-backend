@@ -21,62 +21,76 @@ export class AuthService {
   ) {}
 
   async login(data: LoginDto) {
-    const user = await this.usersService.findByEmail(data.email);
+    try {
+      const user = await this.usersService.findByEmail(data.email);
+      if (!user || !user.password) {
+        throw new UnauthorizedException('USER_NOT_FOUND');
+      }
 
-    if (!user || !user.password) {
-      throw new UnauthorizedException('USER_NOT_FOUND');
+      const valid = await bcrypt.compare(data.password, user.password);
+      if (!valid) {
+        throw new UnauthorizedException('INVALID_CREDENTIALS');
+      }
+
+      const payload = {
+        sub: user.id,
+        email: user.email,
+        role: user.role,
+      };
+
+      const accessExpiresIn =
+        this.config.get<string>('jwt.accessExpiresIn') || '15m';
+      const refreshExpiresIn =
+        this.config.get<string>('jwt.refreshExpiresIn') || '7d';
+
+      const { accessToken, refreshToken } = await JwtUtil.generateTokens(
+        this.jwt,
+        payload,
+        accessExpiresIn,
+        refreshExpiresIn,
+      );
+
+      const encryptedAccessToken = JwtUtil.encryptToken(accessToken);
+      const encryptedRefreshToken = JwtUtil.encryptToken(refreshToken);
+
+      const hashedAccessToken = JwtUtil.hashToken(accessToken);
+      const hashedRefreshToken = JwtUtil.hashToken(refreshToken);
+
+      await this.cacheService.set(
+        `auth:access:${user.id}`,
+        hashedAccessToken,
+        this.ms(accessExpiresIn) - 60_000,
+      );
+
+      await this.cacheService.set(
+        `auth:refresh:${user.id}`,
+        hashedRefreshToken,
+        this.ms(refreshExpiresIn) - 60_000,
+      );
+
+      return {
+        accessToken: encryptedAccessToken,
+        refreshToken: encryptedRefreshToken,
+      };
+    } catch (err) {
+      console.error('[AuthService][login] error:', err);
+      throw new UnauthorizedException('LOGIN_FAILED');
     }
-
-    const valid = await bcrypt.compare(data.password, user.password);
-
-    if (!valid) {
-      throw new UnauthorizedException('INVALID_CREDENTIALS');
-    }
-
-    const payload = {
-      sub: user.id,
-      email: user.email,
-      role: user.role,
-    };
-
-    const accessExpiresIn =
-      this.config.get<string>('jwt.accessExpiresIn') || '15m';
-    const refreshExpiresIn =
-      this.config.get<string>('jwt.refreshExpiresIn') || '7d';
-
-    const { accessToken, refreshToken } = await JwtUtil.generateTokens(
-      this.jwt,
-      payload,
-      accessExpiresIn,
-      refreshExpiresIn,
-    );
-
-    const encryptedAccessToken = JwtUtil.encryptToken(accessToken);
-    const encryptedRefreshToken = JwtUtil.encryptToken(refreshToken);
-
-    await this.cacheService.set(
-      `auth:access:${user.id}`,
-      encryptedAccessToken,
-      this.ms(accessExpiresIn),
-    );
-
-    await this.cacheService.set(
-      `auth:refresh:${user.id}`,
-      encryptedRefreshToken,
-      this.ms(refreshExpiresIn),
-    );
-
-    return {
-      accessToken,
-      refreshToken,
-    };
   }
 
-  async refreshTokens(userId: string, refreshToken: string) {
-    const encrypted = JwtUtil.encryptToken(refreshToken);
+  async refreshTokens(userId: string, encryptedRefreshToken: string) {
+    let refreshToken: string;
+
+    try {
+      refreshToken = JwtUtil.decryptToken(encryptedRefreshToken);
+    } catch (error) {
+      throw new ForbiddenException('INVALID_REFRESH_TOKEN');
+    }
+
+    const hashed = JwtUtil.hashToken(refreshToken);
     const stored = await this.cacheService.get(`auth:refresh:${userId}`);
 
-    if (!stored || stored !== encrypted) {
+    if (!stored || stored !== hashed) {
       throw new ForbiddenException('INVALID_REFRESH_TOKEN');
     }
 
@@ -102,21 +116,27 @@ export class AuthService {
         refreshExpiresIn,
       );
 
+    const encryptedAccessToken = JwtUtil.encryptToken(accessToken);
+    const encryptedNewRefreshToken = JwtUtil.encryptToken(newRefreshToken);
+
+    const hashedAccessToken = JwtUtil.hashToken(accessToken);
+    const hashedRefreshToken = JwtUtil.hashToken(newRefreshToken);
+
     await this.cacheService.set(
       `auth:access:${user.id}`,
-      JwtUtil.encryptToken(accessToken),
-      this.ms(accessExpiresIn),
+      hashedAccessToken,
+      this.ms(accessExpiresIn) - 60_000,
     );
 
     await this.cacheService.set(
       `auth:refresh:${user.id}`,
-      JwtUtil.encryptToken(newRefreshToken),
-      this.ms(refreshExpiresIn),
+      hashedRefreshToken,
+      this.ms(refreshExpiresIn) - 60_000,
     );
 
     return {
-      accessToken,
-      refreshToken: newRefreshToken,
+      accessToken: encryptedAccessToken,
+      refreshToken: encryptedNewRefreshToken,
     };
   }
 

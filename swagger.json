@@ -68,7 +68,7 @@
             "accessToken": []
           }
         ],
-        "summary": "Criar novo usuário",
+        "summary": "Criar novo usuário (restrito a administradores)",
         "tags": [
           "Users"
         ]
@@ -143,7 +143,7 @@
             "accessToken": []
           }
         ],
-        "summary": "Atualizar usuário existente",
+        "summary": "Atualizar usuário existente (apenas o próprio usuário)",
         "tags": [
           "Users"
         ]
@@ -173,7 +173,7 @@
             "accessToken": []
           }
         ],
-        "summary": "Remover usuário",
+        "summary": "Remover usuário (apenas o próprio usuário)",
         "tags": [
           "Users"
         ]

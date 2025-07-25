@@ -25,6 +25,8 @@ import {
   ApiCookieAuth,
 } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
+import { ReqUser } from 'src/modules/auth/decorators/req-user.decorator';
+import { CurrentUser } from '../types/current-user.type';
 
 @ApiTags('Users')
 @UseGuards(AuthGuard('jwt'))
@@ -70,35 +72,44 @@ export class UsersController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({ summary: 'Criar novo usuário' })
+  @ApiOperation({ summary: 'Criar novo usuário (restrito a administradores)' })
   @ApiBody({ type: CreateUserDto })
   @ApiResponse({ status: 201, description: 'Usuário criado com sucesso.' })
   @ApiResponse({ status: 400, description: 'Dados inválidos.' })
   @ApiResponse({ status: 409, description: 'E-mail já está em uso.' })
-  async create(@Body() data: CreateUserDto) {
-    const user = await this.usersService.create(data);
+  async create(
+    @Body() data: CreateUserDto,
+    @ReqUser() currentUser: CurrentUser,
+  ) {
+    const user = await this.usersService.create(data, currentUser);
     return UserViewModel.toHTTP(user);
   }
 
   @Put(':id')
-  @ApiOperation({ summary: 'Atualizar usuário existente' })
+  @ApiOperation({
+    summary: 'Atualizar usuário existente (apenas o próprio usuário)',
+  })
   @ApiParam({ name: 'id', type: 'string' })
   @ApiBody({ type: UpdateUserDto })
   @ApiResponse({ status: 200, description: 'Usuário atualizado com sucesso.' })
   @ApiResponse({ status: 400, description: 'Dados inválidos.' })
   @ApiResponse({ status: 404, description: 'Usuário não encontrado.' })
-  async update(@Param('id') id: string, @Body() data: UpdateUserDto) {
-    const user = await this.usersService.update(id, data);
+  async update(
+    @Param('id') id: string,
+    @Body() data: UpdateUserDto,
+    @ReqUser() currentUser: CurrentUser,
+  ) {
+    const user = await this.usersService.update(id, data, currentUser);
     return UserViewModel.toHTTP(user);
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: 'Remover usuário' })
+  @ApiOperation({ summary: 'Remover usuário (apenas o próprio usuário)' })
   @ApiParam({ name: 'id', type: 'string' })
   @ApiResponse({ status: 204, description: 'Usuário removido com sucesso.' })
   @ApiResponse({ status: 404, description: 'Usuário não encontrado.' })
-  async delete(@Param('id') id: string) {
-    await this.usersService.delete(id);
+  async delete(@Param('id') id: string, @ReqUser() currentUser: CurrentUser) {
+    await this.usersService.delete(id, currentUser);
   }
 }
