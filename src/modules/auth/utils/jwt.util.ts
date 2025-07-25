@@ -2,7 +2,7 @@ import * as crypto from 'crypto';
 import { JwtService } from '@nestjs/jwt';
 
 const ENCRYPTION_SECRET_RAW =
-  process.env.JWT_ENCRYPTION_SECRET || 'default_32_byte_secret_str!32123';
+  process.env.JWT_ENCRYPTION_SECRET || 'default_32_byte_secret_str!32125';
 
 if (ENCRYPTION_SECRET_RAW.length !== 32) {
   throw new Error('JWT_ENCRYPTION_SECRET must be exactly 32 characters long');
