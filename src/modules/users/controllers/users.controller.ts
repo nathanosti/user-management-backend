@@ -25,7 +25,7 @@ import {
   ApiCookieAuth,
 } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
-import { ReqUser } from 'src/modules/auth/decorators/req-user.decorator';
+import { ReqUser } from '../../auth/decorators/req-user.decorator';
 import { CurrentUser } from '../types/current-user.type';
 
 @ApiTags('Users')

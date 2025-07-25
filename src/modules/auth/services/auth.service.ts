@@ -4,8 +4,8 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { UsersService } from 'src/modules/users/services/users.service';
-import { CacheService } from 'src/modules/cache/cache.service';
+import { UsersService } from '../../users/services/users.service';
+import { CacheService } from '../../cache/cache.service';
 import { ConfigService } from '@nestjs/config';
 import { JwtUtil } from '../utils/jwt.util';
 import { LoginDto } from '../dto/login.dto';

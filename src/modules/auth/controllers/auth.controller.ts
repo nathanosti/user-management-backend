@@ -17,7 +17,7 @@ import {
   ApiCookieAuth,
 } from '@nestjs/swagger';
 import { ReqUser } from '../decorators/req-user.decorator';
-import { CurrentUser } from 'src/modules/users/types/current-user.type';
+import { CurrentUser } from '../../users/types/current-user.type';
 import { AuthGuard } from '@nestjs/passport';
 
 @ApiTags('Auth')
@@ -92,7 +92,6 @@ export class AuthController {
     @ReqUser() currentUser: CurrentUser,
     @Res({ passthrough: true }) res: Response,
   ) {
-    console.log(currentUser);
     await this.authService.logout(currentUser.id);
 
     res.clearCookie('accessToken');
