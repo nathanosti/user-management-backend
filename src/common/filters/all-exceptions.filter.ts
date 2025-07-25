@@ -4,18 +4,13 @@ import {
   ArgumentsHost,
   HttpException,
   HttpStatus,
-  LoggerService,
-  Inject,
+  Logger,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
-import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
-  constructor(
-    @Inject(WINSTON_MODULE_NEST_PROVIDER)
-    private readonly logger: LoggerService,
-  ) { }
+  private readonly logger = new Logger('AllExceptionsFilter');
 
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
@@ -23,35 +18,36 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const request = ctx.getRequest<Request>();
 
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
-    let message: string;
+    let responseBody: string | object = 'Internal server error';
 
     if (exception instanceof HttpException) {
       status = exception.getStatus();
-      const res = exception.getResponse();
-      message =
-        typeof res === 'string'
-          ? res
-          : (res as any).message || 'Internal server error';
-    } else if (exception instanceof Error) {
-      message = exception.message;
-    } else {
-      message = 'Internal server error';
+      responseBody = exception.getResponse();
     }
 
-    const errorResponse = {
-      statusCode: status,
-      message,
-      timestamp: new Date().toISOString(),
-      path: request.url,
-      method: request.method,
-    };
+    if (
+      exception instanceof SyntaxError &&
+      'body' in exception &&
+      (exception as any).status === 400
+    ) {
+      status = HttpStatus.BAD_REQUEST;
+      responseBody = `Malformed JSON: ${exception.message}`;
+    }
 
     this.logger.error(
-      `[${request.method}] ${request.url} → ${message}`,
-      (exception as any)?.stack,
-      AllExceptionsFilter.name,
+      `[${request.method}] ${request.url} ${status} → ${JSON.stringify(
+        responseBody,
+      )}`,
     );
 
-    response.status(status).json(errorResponse);
+    response.status(status).json({
+      statusCode: status,
+      message:
+        typeof responseBody === 'string'
+          ? responseBody
+          : ((responseBody as any).message ?? responseBody),
+      path: request.url,
+      timestamp: new Date().toISOString(),
+    });
   }
 }
