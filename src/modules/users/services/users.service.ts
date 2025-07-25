@@ -29,7 +29,7 @@ export class UsersService {
   constructor(
     private readonly usersRepository: UsersRepository,
     private readonly cache: CacheService,
-  ) { }
+  ) {}
 
   private normalizePhone(phone: string): string {
     const digits = phone.replace(/\D/g, '');
@@ -80,6 +80,12 @@ export class UsersService {
     );
 
     return { users, total, page, limit };
+  }
+
+  async findByEmail(email: string): Promise<User | null> {
+    const user = await this.usersRepository.findByEmail(email);
+
+    return user;
   }
 
   async findById(id: string): Promise<User> {
