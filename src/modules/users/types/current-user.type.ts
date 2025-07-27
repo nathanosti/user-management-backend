@@ -1,5 +1,5 @@
 export type CurrentUser = {
-  id: string;
+  userId: string;
   email: string;
   role: 'ADMIN' | 'MEMBER';
 };

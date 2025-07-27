@@ -24,7 +24,7 @@ type UserCreateInput = {
 type UserUpdateInput = Partial<UserCreateInput>;
 
 type CurrentUser = {
-  id: string;
+  userId: string;
   role: string;
 };
 
@@ -35,7 +35,7 @@ export class UsersService {
   constructor(
     private readonly usersRepository: UsersRepository,
     private readonly cache: CacheService,
-  ) {}
+  ) { }
 
   private normalizePhone(phone: string): string {
     const digits = phone.replace(/\D/g, '');
@@ -92,14 +92,19 @@ export class UsersService {
     return this.usersRepository.findByEmail(email);
   }
 
-  async findById(id: string): Promise<User> {
-    const cacheKey = `${this.CACHE_PREFIX}:${id}`;
+  async findById(id: string, currentUser: CurrentUser): Promise<User> {
+    const isOwner = String(currentUser.userId) === String(id);
+    const isAdmin = currentUser.role === 'ADMIN';
 
+    if (!isOwner && !isAdmin) {
+      throw new ForbiddenException('You can only view your own profile');
+    }
+
+    const cacheKey = `${this.CACHE_PREFIX}:${id}`;
     const cached = await this.cache.get<IUserProps>(cacheKey);
     if (cached) return User.fromPrisma(cached);
 
     const user = await this.usersRepository.findById(id);
-
     if (!user) throw new NotFoundException('User not found');
 
     await this.cache.set(cacheKey, user.toPlain(), 60 * 5);
@@ -140,7 +145,7 @@ export class UsersService {
     data: UpdateUserDto,
     currentUser: CurrentUser,
   ): Promise<User> {
-    if (currentUser.id !== id && currentUser.role !== 'ADMIN') {
+    if (currentUser.userId !== id && currentUser.role !== 'ADMIN') {
       throw new ForbiddenException('You can only update your own profile');
     }
 
@@ -163,7 +168,7 @@ export class UsersService {
   }
 
   async delete(id: string, currentUser: CurrentUser): Promise<void> {
-    if (currentUser.id !== id && currentUser.role !== 'ADMIN') {
+    if (currentUser.userId !== id && currentUser.role !== 'ADMIN') {
       throw new ForbiddenException('You can only delete your own account');
     }
 

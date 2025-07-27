@@ -91,6 +91,9 @@
           "200": {
             "description": "Usuário encontrado com sucesso."
           },
+          "403": {
+            "description": "Acesso negado."
+          },
           "404": {
             "description": "Usuário não encontrado."
           }

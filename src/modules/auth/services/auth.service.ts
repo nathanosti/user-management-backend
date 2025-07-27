@@ -10,6 +10,7 @@ import { ConfigService } from '@nestjs/config';
 import { JwtUtil } from '../utils/jwt.util';
 import { LoginDto } from '../dto/login.dto';
 import * as bcrypt from 'bcrypt';
+import { CurrentUser } from '../../users/types/current-user.type';
 
 @Injectable()
 export class AuthService {
@@ -18,7 +19,7 @@ export class AuthService {
     private readonly usersService: UsersService,
     private readonly cacheService: CacheService,
     private readonly config: ConfigService,
-  ) {}
+  ) { }
 
   async login(data: LoginDto) {
     try {
@@ -36,6 +37,8 @@ export class AuthService {
         sub: user.id,
         email: user.email,
         role: user.role,
+        name: user.name,
+        avatar: user.avatar,
       };
 
       const accessExpiresIn =
@@ -69,6 +72,9 @@ export class AuthService {
       );
 
       return {
+        name: user.name,
+        email: user.email,
+        avatar: user.avatar,
         accessToken: encryptedAccessToken,
         refreshToken: encryptedRefreshToken,
       };
@@ -77,67 +83,72 @@ export class AuthService {
     }
   }
 
-  async refreshTokens(userId: string, encryptedRefreshToken: string) {
-    let refreshToken: string;
+  async refreshTokens(currentUser: CurrentUser, encryptedRefreshToken: string) {
+  let refreshToken: string;
 
-    try {
-      refreshToken = JwtUtil.decryptToken(encryptedRefreshToken);
-    } catch (error) {
-      throw new ForbiddenException('INVALID_REFRESH_TOKEN');
-    }
-
-    const hashed = JwtUtil.hashToken(refreshToken);
-    const stored = await this.cacheService.get(`auth:refresh:${userId}`);
-
-    if (!stored || stored !== hashed) {
-      throw new ForbiddenException('INVALID_REFRESH_TOKEN');
-    }
-
-    const user = await this.usersService.findById(userId);
-    if (!user) throw new UnauthorizedException('USER_NOT_FOUND');
-
-    const payload = {
-      sub: user.id,
-      email: user.email,
-      role: user.role,
-    };
-
-    const accessExpiresIn =
-      this.config.get<string>('jwt.accessExpiresIn') || '15m';
-    const refreshExpiresIn =
-      this.config.get<string>('jwt.refreshExpiresIn') || '7d';
-
-    const { accessToken, refreshToken: newRefreshToken } =
-      await JwtUtil.generateTokens(
-        this.jwt,
-        payload,
-        accessExpiresIn,
-        refreshExpiresIn,
-      );
-
-    const encryptedAccessToken = JwtUtil.encryptToken(accessToken);
-    const encryptedNewRefreshToken = JwtUtil.encryptToken(newRefreshToken);
-
-    const hashedAccessToken = JwtUtil.hashToken(accessToken);
-    const hashedRefreshToken = JwtUtil.hashToken(newRefreshToken);
-
-    await this.cacheService.set(
-      `auth:access:${user.id}`,
-      hashedAccessToken,
-      this.ms(accessExpiresIn) - 60_000,
-    );
-
-    await this.cacheService.set(
-      `auth:refresh:${user.id}`,
-      hashedRefreshToken,
-      this.ms(refreshExpiresIn) - 60_000,
-    );
-
-    return {
-      accessToken: encryptedAccessToken,
-      refreshToken: encryptedNewRefreshToken,
-    };
+  try {
+    refreshToken = JwtUtil.decryptToken(encryptedRefreshToken);
+  } catch (error) {
+    throw new ForbiddenException('INVALID_REFRESH_TOKEN');
   }
+
+  const hashed = JwtUtil.hashToken(refreshToken);
+  const stored = await this.cacheService.get(`auth:refresh:${currentUser.userId}`);
+
+  if (!stored || stored !== hashed) {
+    throw new ForbiddenException('INVALID_REFRESH_TOKEN');
+  }
+
+  const user = await this.usersService.findById(currentUser.userId, currentUser);
+  if (!user) throw new UnauthorizedException('USER_NOT_FOUND');
+
+  const payload = {
+    sub: user.id,
+    email: user.email,
+    role: user.role,
+    name: user.name,
+    avatar: user.avatar,
+  };
+
+  const accessExpiresIn =
+    this.config.get<string>('jwt.accessExpiresIn') || '15m';
+  const refreshExpiresIn =
+    this.config.get<string>('jwt.refreshExpiresIn') || '7d';
+
+  const { accessToken, refreshToken: newRefreshToken } =
+    await JwtUtil.generateTokens(
+      this.jwt,
+      payload,
+      accessExpiresIn,
+      refreshExpiresIn,
+    );
+
+  const encryptedAccessToken = JwtUtil.encryptToken(accessToken);
+  const encryptedNewRefreshToken = JwtUtil.encryptToken(newRefreshToken);
+
+  const hashedAccessToken = JwtUtil.hashToken(accessToken);
+  const hashedRefreshToken = JwtUtil.hashToken(newRefreshToken);
+
+  await this.cacheService.set(
+    `auth:access:${user.id}`,
+    hashedAccessToken,
+    this.ms(accessExpiresIn) - 60_000,
+  );
+
+  await this.cacheService.set(
+    `auth:refresh:${user.id}`,
+    hashedRefreshToken,
+    this.ms(refreshExpiresIn) - 60_000,
+  );
+
+  return {
+    name: user.name,
+    email: user.email,
+    avatar: user.avatar,
+    accessToken: encryptedAccessToken,
+    refreshToken: encryptedNewRefreshToken,
+  };
+}
 
   private ms(duration: string): number {
     const match = duration.match(/^(\d+)([smhd])$/);

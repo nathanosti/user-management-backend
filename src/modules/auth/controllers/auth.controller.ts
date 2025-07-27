@@ -23,7 +23,7 @@ import { AuthGuard } from '@nestjs/passport';
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(private readonly authService: AuthService) { }
 
   @Post('login')
   @HttpCode(200)
@@ -46,10 +46,19 @@ export class AuthController {
       httpOnly: true,
       secure: false,
       sameSite: 'strict',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 
-    return { message: 'Login successful' };
+    return {
+      message: 'Login successful',
+      user: {
+        name: result.name,
+        email: result.email,
+        avatar: result.avatar,
+      },
+      accessToken: result.accessToken,
+      refreshToken: result.refreshToken,
+    };
   }
 
   @Post('refresh')
@@ -57,13 +66,16 @@ export class AuthController {
   @ApiOperation({ summary: 'Atualizar tokens com refreshToken' })
   @ApiResponse({ status: 200, description: 'Tokens atualizados com sucesso' })
   async refresh(
+    @ReqUser() currentUser: CurrentUser,
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const userId = req.cookies?.userId;
     const refreshToken = req.cookies?.refreshToken;
 
-    const result = await this.authService.refreshTokens(userId, refreshToken);
+    const result = await this.authService.refreshTokens(
+      currentUser,
+      refreshToken,
+    );
 
     res.cookie('accessToken', result.accessToken, {
       httpOnly: true,
@@ -79,9 +91,17 @@ export class AuthController {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    return { message: 'Token refreshed' };
+    return {
+      message: 'Token refreshed',
+      user: {
+        name: result.name,
+        email: result.email,
+        avatar: result.avatar,
+      },
+      accessToken: result.accessToken,
+      refreshToken: result.refreshToken,
+    };
   }
-
   @Post('logout')
   @HttpCode(200)
   @UseGuards(AuthGuard('jwt'))
@@ -92,7 +112,7 @@ export class AuthController {
     @ReqUser() currentUser: CurrentUser,
     @Res({ passthrough: true }) res: Response,
   ) {
-    await this.authService.logout(currentUser.id);
+    await this.authService.logout(currentUser.userId);
 
     res.clearCookie('accessToken');
     res.clearCookie('refreshToken');

@@ -33,7 +33,7 @@ import { CurrentUser } from '../types/current-user.type';
 @ApiCookieAuth('accessToken')
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(private readonly usersService: UsersService) { }
 
   @Get()
   @ApiOperation({ summary: 'Listar todos os usuários com paginação' })
@@ -65,8 +65,9 @@ export class UsersController {
   @ApiParam({ name: 'id', type: 'string' })
   @ApiResponse({ status: 200, description: 'Usuário encontrado com sucesso.' })
   @ApiResponse({ status: 404, description: 'Usuário não encontrado.' })
-  async findById(@Param('id') id: string) {
-    const user = await this.usersService.findById(id);
+  @ApiResponse({ status: 403, description: 'Acesso negado.' })
+  async findById(@Param('id') id: string, @ReqUser() currentUser: CurrentUser) {
+    const user = await this.usersService.findById(id, currentUser);
     return UserViewModel.toHTTP(user);
   }
 
