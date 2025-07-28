@@ -30,9 +30,15 @@ export class CreateUserDto {
   })
   phone?: string;
 
-  @ApiProperty({ required: false, type: String, format: 'date-time' })
+  @ApiProperty({
+    required: false,
+    type: String,
+    format: 'date-time',
+    example: '1995-04-10T00:00:00.000Z',
+    description: 'Data de nascimento no formato ISO',
+  })
   @IsOptional()
-  @IsDateString()
+  @IsDateString({}, { message: 'birthDate must be a valid ISO string' })
   birthDate?: string;
 
   @ApiProperty({ required: false })
@@ -57,6 +63,6 @@ export class CreateUserDto {
   @ApiProperty({ required: false, minLength: 6 })
   @IsOptional()
   @IsString()
-  @MinLength(6)
+  @MinLength(6, { message: 'password must be at least 6 characters' })
   password?: string;
 }

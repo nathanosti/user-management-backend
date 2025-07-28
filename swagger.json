@@ -287,7 +287,9 @@
           },
           "birthDate": {
             "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "example": "1995-04-10T00:00:00.000Z",
+            "description": "Data de nascimento no formato ISO"
           },
           "avatar": {
             "type": "string"
